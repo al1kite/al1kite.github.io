@@ -4,6 +4,7 @@ title: "ErrorResponse 핸들링과 문서화"
 comments: true
 excerpt: ""
 date: 2023-10-20
+categories: [Server]
 tags: [RestDocs , Swagger , SpringBoot, ErrorResponse]
 thumbnail: https://github.com/cocone-m/techup.github.io/assets/102217402/b1acdc35-885f-4444-9c44-fee9bcbdd00a
 ---
@@ -93,9 +94,9 @@ response body 값으로 함께 보내 제어해줍니다.
 이렇게 custom 한 Error Code 를 response 값으로 내려주고 싶습니다.
 
 
-<p style="text-align: center">
+<center>
 <img width="500" src="https://github.com/cocone-m/techup.github.io/assets/102217402/b3123caa-2a9f-4462-990b-c218c8692cd1">
-</p>
+</center>
 
 Spring Boot 는 전역 예외 처리를 적용할 수 있는 `@ControllerAdvice`와 `@RestControllerAdvice` 에노테이션을 제공하고 있습니다.
 공식 문서에 따르면 `RestControllerAdvice`는 `@ControllerAdvice`에 `@ResponseBody`가 포함된 개념입니다.
@@ -178,9 +179,9 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
 하지만 일반적으로 예외는 서버로 보낸 요청을 controller 가 받은 후 로직을 처리하는 과정에서 발생합니다. 
 <br> 즉, 일단 요청이 컨트롤러에 도달한 후 예외 발생 및 처리를 하는 과정으로 작동합니다.
 
-<p style="text-align: center">
+<center>
 <img width="450" src="https://github.com/cocone-m/techup.github.io/assets/102217402/df30c600-bcec-44d0-977e-965e38356fc8">
-</p>
+</center>
 
 하지만 Spring Boot Security는 요청이 controller 에 도달하기 전에 `filterChain`에서 예외를 발생시킵니다. 
 즉, Spring Boot Security 관련 Exception 은 컨트롤러에서 발생하는 예외를 처리하는 `@ControllerAdvice`로 제어가 불가합니다. 
@@ -539,9 +540,9 @@ public class OperationBuilderPluginImpl implements OperationBuilderPlugin {
 
 이제 Swagger 상에 우리가 제어한 ErrorCode 가 Response 값으로 추가된 것을 확인할 수 있습니다.
 
-<p style="text-align: center">
+<center>
 <img width="944" src="https://github.com/cocone-m/techup.github.io/assets/102217402/d49d9956-70bf-4a3b-99a1-34e5c4d625a1">
-</p>
+</center>
 
 Springdoc-openapi 는 swagger-ui 상에 제공할 값을 커스터마이징 할 수 있는 `customize()` 메소드를 지원합니다.
 따라서 다음 메소드를 활용해 swagger 를 보다 간편하고 유연하게 커스터마이징이 가능합니다. 
