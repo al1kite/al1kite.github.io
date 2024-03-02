@@ -22,7 +22,8 @@ Github 저장소에 저장된 정적 웹문서를 Github 에서 무료로 웹에
 
 가장 간단한 방법으로 Github 블로그를 제작해보려고 합니다.
 
-마음에 드는 Jekyll Theme 를 찾아 Fork 해줍니다. 그 후, Fork 받은 레파지토리 이름을 `{github 아이디}.github.io` 로 변경해줍니다. 
+마음에 드는 Jekyll Theme 를 찾아 Fork 해줍니다. <BR>
+그 후, Fork 받은 레파지토리 이름을 `{github 아이디}.github.io` 로 변경해줍니다. <BR>
 github 레파지토리를 `{github 아이디}.github.io` 이름으로 생성 후 원하는 테마 파일을 설치 및 붙여 넣어 실행도 가능하지만, 저는 왜인지 파일 간 충돌로 인해 간단하게 Fork 해주는 방법을 선택했습니다. Fork 로 진행 시 ui, google analytics, adsense 등 커스터마이징 하기 수월하다는 장점이 있습니다. 다만, Fork 로 진행 시 Commit 내역이 깔끔하지 못하다는 단점이 있습니다.
 
 저는 `Chirpy` 테마를 Fork 해주었습니다. 
@@ -72,11 +73,11 @@ eval "$(rbenv init -)"
 source ~/.zshrc 
 ```
 
-bash 를 사용하는 경우, ./bash_profile 에 작성하셔도 무방합니다. 다만, MacOS에서는 zsh로 전환하도록 장려되고 있습니다.
+bash 를 사용하는 경우, ./bash_profile 에 작성하셔도 무방합니다. 다만, MacOS에서는 zsh로의 전환을 장려하고 있습니다.
 
 ### Jkeyll 설치하기
 
-GithubPage 제작 프로그램으로 가장 많이 사용되는 Jekyll은 GitHub Pages 및 간소화된 빌드 프로세스를 기본적으로 지원하는 정적 사이트 생성기입니다. 이는 Markdown 및 HTML 파일을 가져와 선택한 레이아웃에 따라 완전한 정적 웹 사이트를 만듭니다.
+GithubPage 제작 프로그램으로 가장 많이 사용되는 Jekyll은 GitHub Pages 및 간소화된 빌드 프로세스를 기본적으로 지원하는 정적 사이트 생성기입니다. <BR> Jekyll은 Markdown 및 HTML 파일을 가져와 선택한 레이아웃에 따라 정적 웹 사이트를 만듭니다.
 
 ```
 # Install jekyll
@@ -88,20 +89,24 @@ jekyll -v
 
 저는 설치하는 도중 gem 권한 에러가 발생했습니다.
 ![img](https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/e9577860-2483-4cd5-ada5-2412acf48d1f)
-아직 Ruby 개발용으로 적절하게 구성되지 않은 Mac에 gem을 설치하려고 하면 이 오류가 발생합니다.
+아직 Ruby 개발용으로 적절하게 구성되지 않은 Mac에 gem을 설치하려고 하면 해당 오류가 발생합니다. <BR> 
 모든 Mac에 Ruby를 사전 설치 되어 있습니다. 따라서 시스템 Ruby를 사용하여 gem을 설치하려고 하면 gem이 설치되는 기본 위치는 디렉터리인 `/Library/Ruby/Gems/2.6.0` 입니다. 
-그러나 해당 디렉토리는 수정될 수 없으므로 Apple 은 해당 디렉토리에 쓸 수 있는 권한을 부여하지 않아 다음과 같은 오류가 발생합니다.
+그러나 해당 디렉토리는 수정될 수 없고, Apple 은 해당 디렉토리에 쓸 수 있는 권한을 부여하지 않으므로 다음과 같은 오류가 발생합니다.
+다시 말해, 앞서 진행한 PATH 환경 설정이 적용이 제대로 진행되지 않아 기본 디렉토리의 Ruby를 사용하며 발생한 오류라고 볼 수 있습니다.
 
-sudo 를 붙여줘도 해결이 되지만, `sudo gem` 으로 설치하거나 시스템 파일 및 디렉터리의 권한을 변경하는 건 수행하려는 작업이 명확하더라도 권장하지 않습니다.
-따라서 다음과 같은 오류 발생 시, 앞서 진행한 PATH 환경 설정이 적용이 안 된 것이므로 위의 과정을 다시 진행한 후 설치하면 해결할 수 있습니다. 이때, ruby 3.1.3 이상으로 진행하셔야 합니다.
+sudo 를 붙여줘도 해결이 되지만, `sudo gem` 으로 설치하거나 시스템 파일 및 디렉터리의 권한을 변경하는 건 수행하려는 작업이 명확하더라도 권장하지 않습니다. <BR> 
+즉, 다음과 같은 오류 발생 시, 위의 과정을 다시 진행한 후 설치하면 해결할 수 있습니다. 이때, ruby 3.1.3 이상으로 진행하셔야 합니다.
 
 ### Local Test
 
 마지막으로 로컬 환경에서 블로그 파일을 실행해서 잘 작동하는지 테스트 해보겠습니다.
 
-Bundler 는 Ruby 프로젝트에 필요한 Gem 들의 올바른 버전을 추적하고 설치해서 일관된 환경을 제공합니다. 따라서 이는 Jekyll 을 시스템 레벨이나 사용자 레벨에 설치하고 싶지 않을때 특히 유용합니다. 
+Bundler 는 Ruby 프로젝트에 필요한 Gem 들의 올바른 버전을 추적하고 설치해서 일관된 환경을 제공합니다. <BR> 
+따라서 Bundler는 Jekyll 을 시스템 레벨이나 사용자 레벨에 설치하고 싶지 않을때 특히 유용합니다. 
 
-따라서 [Bundler](https://bundler.io/) 를 설치해줍니다. 이때, Fork 받은 Source 에 이미 dependencies 관련 Gemfile 이 존재 하므로 다음과 같은 명령어만 입력해주면 됩니다. 없을 시, 프로젝트 루트의 Gemfile에 dependencies을 지정해야 합니다.
+이제 [Bundler](https://bundler.io/) 를 설치해줍니다. <BR> 
+이때, Fork 받은 Source 에 이미 dependencies 관련 Gemfile 이 존재 하므로 다음과 같은 명령어만 입력해주면 됩니다. <BR> 
+없을 시, 프로젝트 루트의 Gemfile에 dependencies을 지정해야 합니다.
 
 ```
 bundle install
@@ -113,7 +118,7 @@ bundle exec jekyll serve
 ```
 저는 명령어 실행 도중 다음과 같은 에러가 발생했습니다.
 ![img](https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/0fe0a576-2b5c-4d68-8db6-d645536155b2)
-이는 [homebrew를 통해 설치되는 최신 버전의 Ruby 에서 기본적으로 webrick가 포함되어 있지 않아 생기는 이슈](https://github.com/github/pages-gem/issues/752)입니다. 따라서 Ruby 2.7 이하 버전을 사용하거나 webrick 을 수동으로 설치해줍니다.
+이는 [homebrew를 통해 설치되는 최신 버전의 Ruby 에서 기본적으로 webrick가 포함되어 있지 않아 생기는 이슈](https://github.com/github/pages-gem/issues/752)입니다. 따라서 Ruby 2.7 이하 버전을 사용하거나 `webrick` 을 수동으로 설치해줍니다.
 ```
 bundle add webrick
 ```
