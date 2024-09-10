@@ -9,4 +9,4 @@ order: 4
 > 꾸준하고 확실하게 성장하는 개발자가 되고싶습니다! <BR>
 > 재밌는 주제로 꾸준히 포스팅하도록 노력하겠습니다 잘 부탁드립니다 🙇🏻‍♀️
 
-<img src="/assets/img/image.jpg">
+<img alt="" src="/assets/img/image.jpg">
