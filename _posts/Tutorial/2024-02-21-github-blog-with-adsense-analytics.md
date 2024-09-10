@@ -5,6 +5,7 @@ toc: true
 math: true
 mermaid: true
 date: 2024-02-20
+categories: [Tutorial]
 tags: [ Google Adsense , Google Analytics, Jekyll, Github Pages]
 ---
 안녕하세요! 그동안 개발 기술 블로그에 정착하지 못 하고 있었는데요 
