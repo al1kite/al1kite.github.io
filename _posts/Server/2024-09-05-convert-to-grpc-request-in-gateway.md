@@ -266,11 +266,11 @@ public class RouteConfig {
 그리고 두 방식을 경주를 시켜보았습니다 😃 누가누가 더 빠르나 🐇🐢
 
 <img width="868" alt="" src="https://github.com/user-attachments/assets/e7ba7942-f8fc-4cfd-8621-507f585e6e2b">
-  <p align="center" style="color:gray">
+  <p align="center" style="color:rgb(128,128,128)">
    ☝🏻 gateway에서 변환해주는 방식
   </p>
 <img width="876" alt="" src="https://github.com/user-attachments/assets/174bc8df-29eb-4c80-ade4-e08863e7d928">
-  <p align="center" style="color:gray">
+  <p align="center" style="color:rgb(128,128,128)">
    ☝🏻 controller로 감싼 방식
   </p>
 postman으로 동일하게 50번의 호출과 평균을 낸 결과 정답은 controller 로 감싼 방법이 더 빨랐습니다..

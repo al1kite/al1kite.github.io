@@ -173,7 +173,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 
 [Google Analytics](https://analytics.google.com/analytics/web/provision/#/provision) 에 접속 후, 시작 페이지에서 `측정 시작` 버튼을 클릭합니다.
 
-<img width="1049" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/2e96bb62-d04c-4755-9762-ddbb7f2f1377">
+<img width="1049" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/2e96bb62-d04c-4755-9762-ddbb7f2f1377">
 
 구글에서 안내해주는 다음과 같은 절차를 통해 Google Analytics 를 적용해보겠습니다.
 
@@ -184,7 +184,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 가장 먼저 속성을 만들어주겠습니다. 속성은 웹사이트 단위로 구분 되는 측정하려는 대상 (웹사이트 및/또는 앱)의 데이터 그룹을 나타냅니다. 계정에 속성을 추가하면 해당 속성의 데이터를 수집하며, 이 속성에는 고유의 추적 코드가 생성됩니다. 속성 내에서 보고서를 조회하고 데이터 수집, 기여 분석, 개인 정보 보호 설정, 제품 연결을 관리할 수 있습니다. 
 
 <center>
-<img width="500" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/6184a5aa-b01d-4be3-b3a4-52d4403d322d">
+<img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/6184a5aa-b01d-4be3-b3a4-52d4403d322d">
 </center>
 <center>
 <img width="450" alt="image" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/5ab552df-d6a1-4e28-bdcf-559add73669f">
@@ -196,7 +196,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 ### 2. 비즈니스 세부정보
 이제 비즈니스 세부정보를 입력하겠습니다.
 <center>
-<img width="500" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/244288ad-73db-4f8f-b4d9-b41d23c576d0">
+<img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/244288ad-73db-4f8f-b4d9-b41d23c576d0">
 </center>
 
 뚜렷한 업종 카테고리와 비즈니스를 가지고 있는게 아닌 개인 블로그이기에 업종 카테고리로는 기타, 비즈니스 규모는 작음으로 설정해주었습니다.
@@ -204,7 +204,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 ### 3. 비즈니스 목표
 다음 단계로 비즈니스 목표를 설정해줍니다.
 <center>
-<img width="500" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/c2db2ff5-a364-4f82-ba5a-3624a1d63170">
+<img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/c2db2ff5-a364-4f82-ba5a-3624a1d63170">
 </center>
 측정하려는 웹사이트의 목표 (리드 생성, 온라인 판매 증대, 브랜드 인지도 향상, 사용자 행동 검토 등) 을 설정해줍니다. 
 기준 보고서 보기로 선택 시 특별한 주제 없이 [수명 주기(획득에서 유지까지 고객 여정의 각 단계)에 관한 보고서 모음](https://support.google.com/analytics/answer/12924233?sjid=2530528426777855001-AP)이 보이도록 설정되는 것 같습니다. 다만, 기준 보고서 보기 선택 시 비즈니스 목표는 표시되지 않습니다.
@@ -221,7 +221,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 마지막 단계입니다. 드디어 데이터를 수집하기 위한 설정을 진행해봅시다.
 
 <center>
-<img width="500" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/04a19c76-cbc7-406f-a415-660cd039ba5a">
+<img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/04a19c76-cbc7-406f-a415-660cd039ba5a">
 </center>
 가장 먼저 수집하려는 데이터의 플랫폼을 선택해줍니다. 저는 웹 기반 블로그이기 때문에 웹으로 선택했습니다.
 
@@ -238,7 +238,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 스트림 만들기를 누르면 다음과 같이 측정 ID 를 포함한 스트림 세부정보를 줍니다. 
 
 <center>
-<img width="700" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/e33cedd0-f8ec-49e3-a086-6efa4a0b611d">
+<img width="700" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/e33cedd0-f8ec-49e3-a086-6efa4a0b611d">
 </center>
 
 이제 해당 스트림의 측정 ID 코드 조각을 제 웹사이트에 추가해주면 됩니다. 만약 사이트가 Jekyll로 구축되지 않은 경우, 사이트에 있는 모든 HTML 파일의 헤드 섹션에 추적 코드 조각을 추가해줘야 합니다.
@@ -248,7 +248,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 제가 사용하는 Chirpy 테마의 경우, _includes 디렉토리 안에 미리 다음과 같은 코드와 함께 google-analytics.html 파일이 존재합니다.
 
 <center>
-<img width="350" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/6dd3dd16-8aa5-41e7-89bd-9adc2056fae8">
+<img width="350" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/6dd3dd16-8aa5-41e7-89bd-9adc2056fae8">
 </center>
 
 따라서 _config.yml 파일에 해당 경로로 tracking_id 값만 추가해주면 사용 가능합니다.
@@ -258,7 +258,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 만약 Chiry 테마와 같이 analytics 관련 파일을 미리 제공해주지 않았을 시에 google analytics 에서 제공한 측정 ID 코드 조각을 _includes 디렉토리 안에 새로운 파일로 붙여넣습니다. 
 
 <center>
-<img width="400" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/ddc5f016-9ea4-4669-aa25-f3edb8eb81ca">
+<img width="400" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/ddc5f016-9ea4-4669-aa25-f3edb8eb81ca">
 </center>
 
 이후 사이트 레이아웃에 분석을 포함시켜주면 됩니다. Jekyll 기반 사이트일 경우 사이트 기본 레이아웃 파일인 _layouts/default.html에 `{​% include {작성한 파일명}.html %​}` 을 추가하주면 됩니다. 이제 사이트의 모든 페이지에 Google Analytics 추적 코드가 포함됩니다. Jekyll 사이트가 아닐 경우 앞서 설명한대로 측정하려는 HTML 파일 각각에 추적 코드에 추가해주어야 합니다.
@@ -283,12 +283,12 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 
 ### 1. 사용자 정보 입력
 <center>
-<img width="450" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/158fcea5-ef2b-4e2c-8f9b-0d94846c3bbf">
+<img width="450" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/158fcea5-ef2b-4e2c-8f9b-0d94846c3bbf">
 </center>
 
 먼저 개인 정보를 입력해줍니다. 거주하는 주소와 우편주소, 이름을 입력한 후 다음 단계로 넘어갑니다.
 
-<span style="color:gray">
+<span style="color:rgb(128,128,128)">
 PS. 미국 여행 갔을 때도 어디 예약하거나 등록만 하려고 하면 주소 입력하는 걸 참 좋아하더군요.. 대충 써도 잘 모르더만 미국 애들은 주소를 좋아하나봐요 (홈리스는 어떡하라고!)
 </span>
 
@@ -298,10 +298,10 @@ PS. 미국 여행 갔을 때도 어디 예약하거나 등록만 하려고 하�
 
 <div style="display: grid; 	grid-template-columns: 4fr 1fr;">
 <span style="display: flex">
-<img src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/b653c16e-8b79-4c40-bf9e-8bb89dfc6e48">
+<img alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/b653c16e-8b79-4c40-bf9e-8bb89dfc6e48">
 </span>
 <span style="display: flex">
-<img src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/28c8c29e-0824-4984-88fa-4489e5c9ed1c">
+<img alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/28c8c29e-0824-4984-88fa-4489e5c9ed1c">
 </span>
 </div>
 
@@ -311,7 +311,7 @@ PS. 미국 여행 갔을 때도 어디 예약하거나 등록만 하려고 하�
 
 구글에서 제공해주는 해당 코드를 _includes 의 head.html 에 넣어줍니다. 
 <center>
-<img width="500" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/129b6b3b-60f1-4da2-8760-64c47a44513f">
+<img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/129b6b3b-60f1-4da2-8760-64c47a44513f">
 </center>
 
 저는 기존 head.html 에 맞춰 메타 태그로 넣어주겠습니다.
