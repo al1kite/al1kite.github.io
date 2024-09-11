@@ -163,6 +163,13 @@ tags: [TAG]     # TAG 이름은 항상 소문자여야 합니다. <BR>
 ---
 ```
 
+> 검색이나 다크모드 등 일부 기능이 잘 동작하지 않아 왜 그런가 구글링해본 결과
+> `npm install && npm run build` 로 npm을 통해 node.js 모듈을 설치 후 
+> .gitignore 에서 assets/js/dist 를 주석 처리 해야만 node.js 모듈을 통해 생성된 assets/js/dist 가  
+> 올라가면서 블로그 기능이 정상적으로 동작하게 된다고 합니다
+> 아니면 CI/CD 빌드 시 저처럼 `assets/js/dist/*.min.js Not Found` 에러를 마주하게 됩니다
+{: .prompt-danger }
+
 
 
 
