@@ -3,7 +3,7 @@ layout: post
 title: 삐약이 시절 처음 Spring 으로 백엔드 개발을 마치고 작성했던 회고를 슬쩍 꺼내 올려봅니다
 comments: true
 excerpt: ""
-date: 2024-09-12
+date: 2024-09-11
 categories: [Doodle, Retrospect]
 tags: [Retrospect]
 ---
