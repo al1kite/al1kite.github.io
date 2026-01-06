@@ -16,7 +16,7 @@ timezone: Asia/Shanghai
 
 title: Jung Dayeon # the main title
 
-tagline: 개발을 사랑하는 사람이 되구십따 🥺🙏🏻👩🏻‍💻💗🔥💪🏻 # it will display as the sub-title
+tagline: Hello World? # it will display as the sub-title
 
 description: >- # used by seo meta and the atom feed
   Jung Dayeon Github Blog for technical writing.
