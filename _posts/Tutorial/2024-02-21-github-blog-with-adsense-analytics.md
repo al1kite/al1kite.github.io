@@ -13,13 +13,13 @@ tags: [ Google Adsense , Google Analytics, Jekyll, Github Pages]
 개발 기술 블로그를 고민하던 도중 Github Pages 를 이용한 블로그 만드는 법을 발견하고 진행하게 되었는데, 오늘은 이 경험을 토대로
 Github 블로그 만드는 방법 및 Google Adsense 및 Google Analytics 연결에 대해 작성해보겠습니다. 🙇🏻‍♀️ 
 
-# Github Pages 를 통한 블로그 제작
+## Github Pages 를 통한 블로그 제작
 ---
 
 [GitHub Pages](https://docs.github.com/ko/pages/quickstart) 는 GitHub를 통해 호스트되고 게시되는 퍼블릭 웹 페이지입니다.
 Github 저장소에 저장된 정적 웹문서를 Github 에서 무료로 웹에서 볼 수 있도록 호스팅 하는 기능을 제공합니다. 
 
-## Github 블로그 만들기
+### Github 블로그 만들기
 
 가장 간단한 방법으로 Github 블로그를 제작해보려고 합니다.
 
@@ -29,7 +29,7 @@ github 레파지토리를 `{github 아이디}.github.io` 이름으로 생성 후
 
 저는 `Chirpy` 테마를 Fork 해주었습니다. 
 
-### Ruby 설치하기
+#### Ruby 설치하기
 
 Jekyll 은 Ruby 기반 정적 웹사이트 생성기이기 때문에, Ruby 설치가 필수적입니다.
 
@@ -76,7 +76,7 @@ source ~/.zshrc
 
 bash 를 사용하는 경우, ./bash_profile 에 작성하셔도 무방합니다. 다만, MacOS에서는 zsh로의 전환을 장려하고 있습니다.
 
-### Jkeyll 설치하기
+#### Jkeyll 설치하기
 
 GithubPage 제작 프로그램으로 가장 많이 사용되는 Jekyll은 GitHub Pages 및 간소화된 빌드 프로세스를 기본적으로 지원하는 정적 사이트 생성기입니다. <BR> Jekyll은 Markdown 및 HTML 파일을 가져와 선택한 레이아웃에 따라 정적 웹 사이트를 만듭니다.
 
@@ -98,7 +98,7 @@ jekyll -v
 sudo 를 붙여줘도 해결이 되지만, `sudo gem` 으로 설치하거나 시스템 파일 및 디렉터리의 권한을 변경하는 건 수행하려는 작업이 명확하더라도 권장하지 않습니다. <BR> 
 즉, 다음과 같은 오류 발생 시, 위의 과정을 다시 진행한 후 설치하면 해결할 수 있습니다. 이때, ruby 3.1.3 이상으로 진행하셔야 합니다.
 
-### Local Test
+#### Local Test
 
 마지막으로 로컬 환경에서 블로그 파일을 실행해서 잘 작동하는지 테스트 해보겠습니다.
 
@@ -131,7 +131,7 @@ bundle add webrick
 Fork 를 통해 블로그를 생성하지 않았거나, Local Test 과정에서 오류가 발생했다면 [Jekyll 튜토리얼](https://jekyllrb.com/tutorials/using-jekyll-with-bundler/
 )을 참고하시면 좋을 것 같습니다.
 
-### 구조 살펴보기
+#### 구조 살펴보기
 파일 구조를 대략적으로 살펴보겠습니다.
 
 > _data : 언어에 따른 단어 설정 및 폰트와 라이브러리, 저자 연락망과 정보, 포스트 공유하기 등의 구성이 담겨있는 디렉토리입니다. <BR>
@@ -174,7 +174,7 @@ tags: [TAG]     # TAG 이름은 항상 소문자여야 합니다. <BR>
 
 
 
-# Google Analytics 적용
+## Google Analytics 적용
 ---
 Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google Analytics 를 적용해 통계를 확인하겠습니다. 시작에 앞서, 구글 아이디가 필요합니다. 
 
@@ -187,7 +187,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 <img width="638" alt="image" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/f87459db-15a8-4bab-8859-f0cbf1bc8d84">
 
 
-### 1. 속성 만들기
+#### 1. 속성 만들기
 가장 먼저 속성을 만들어주겠습니다. 속성은 웹사이트 단위로 구분 되는 측정하려는 대상 (웹사이트 및/또는 앱)의 데이터 그룹을 나타냅니다. 계정에 속성을 추가하면 해당 속성의 데이터를 수집하며, 이 속성에는 고유의 추적 코드가 생성됩니다. 속성 내에서 보고서를 조회하고 데이터 수집, 기여 분석, 개인 정보 보호 설정, 제품 연결을 관리할 수 있습니다. 
 
 <center>
@@ -200,7 +200,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 속성 이름은 메인 화면에서 다음과 같이 표시됩니다. 속성 이름은 측정하려는 웹사이트를 통칭하는 별명 정도로 생각해도 좋을 것 같습니다.
 
 
-### 2. 비즈니스 세부정보
+#### 2. 비즈니스 세부정보
 이제 비즈니스 세부정보를 입력하겠습니다.
 <center>
 <img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/244288ad-73db-4f8f-b4d9-b41d23c576d0">
@@ -208,7 +208,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 
 뚜렷한 업종 카테고리와 비즈니스를 가지고 있는게 아닌 개인 블로그이기에 업종 카테고리로는 기타, 비즈니스 규모는 작음으로 설정해주었습니다.
 
-### 3. 비즈니스 목표
+#### 3. 비즈니스 목표
 다음 단계로 비즈니스 목표를 설정해줍니다.
 <center>
 <img width="500" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/c2db2ff5-a364-4f82-ba5a-3624a1d63170">
@@ -223,7 +223,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 ![image](https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/a44bb2a2-52d6-427a-81e1-1d17f33c6994)
 또한 컬렉션 맞춤설정을 통해 비즈니스 목표에 따른 보고서를 추가,수정,삭제 및 새 주제 (비즈니스 목표)와 주제에 맞는 보고서를 원하는 대로 생성이 가능합니다.
 
-### 4. 데이터 수집
+#### 4. 데이터 수집
 
 마지막 단계입니다. 드디어 데이터를 수집하기 위한 설정을 진행해봅시다.
 
@@ -274,7 +274,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 
 그럼 다음과 같이 Google Analytics 를 통해 웹사이트 측정 및 분석이 가능해집니다!
 
-# Google Adsense 적용
+## Google Adsense 적용
 ---
 
 블로그에 광고를 개재해 수익을 창출해보고 싶습니다. 
@@ -288,7 +288,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 
 일련의 과정을 통해 Google Adsense 를 붙일 수 있을 것 같습니다.
 
-### 1. 사용자 정보 입력
+#### 1. 사용자 정보 입력
 <center>
 <img width="450" alt="" src="https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/158fcea5-ef2b-4e2c-8f9b-0d94846c3bbf">
 </center>
@@ -299,7 +299,7 @@ Github Page는 방문자 통계 기능을 제공하지 않기 때문에, Google 
 PS. 미국 여행 갔을 때도 어디 예약하거나 등록만 하려고 하면 주소 입력하는 걸 참 좋아하더군요.. 대충 써도 잘 모르더만 미국 애들은 주소를 좋아하나봐요 (홈리스는 어떡하라고!)
 </span>
 
-### 2. 광고 표시 모습 확인
+#### 2. 광고 표시 모습 확인
 
 다음 단계로 넘어가면 광고가 어떻게 표시될지를 설정할 수 있습니다.
 
@@ -312,7 +312,7 @@ PS. 미국 여행 갔을 때도 어디 예약하거나 등록만 하려고 하�
 </span>
 </div>
 
-### 3.에드센스 사이트 연결
+#### 3.에드센스 사이트 연결
 
 ![image](https://github.com/cotes2020/jekyll-theme-chirpy/assets/102217402/bdc34d4b-8010-405c-bb69-353ec4105ff6)
 
