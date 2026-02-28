@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "On-Premise RAG 시스템 설계기: n8n + LangChain + Qdrant로 주식 시장 분석 파이프라인 구축하기"
+title: "n8n + LangChain + Qdrant로 주식 시장 분석 파이프라인 구축하기"
 comments: true
 excerpt: "RAG가 무엇인지, 왜 개발자들이 보통 코드로 파이프라인을 짜는데 나는 n8n이라는 워크플로 도구를 선택했는지, 그리고 Ollama + Qdrant + LangChain으로 완전한 온프레미스 RAG 시스템을 설계한 전 과정을 코드와 함께 정리합니다."
 date: 2025-08-15
@@ -145,31 +145,7 @@ n8n에서는 하나의 노드 출력을 여러 노드에 연결하면 **자동�
 
 ### 시스템 구성도
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Docker Compose                           │
-│                                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────────┐ │
-│  │  Qdrant  │  │ Ollama   │  │   n8n    │  │ apex-llm-svc   │ │
-│  │ (Vector  │  │ (Local   │  │ (Workflow│  │ (FastAPI +     │ │
-│  │   DB)    │  │  LLM)    │  │  Engine) │  │  LangChain)    │ │
-│  │  :6333   │  │ :11434   │  │  :5678   │  │  :8000         │ │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └───────┬────────┘ │
-│       │              │             │                │          │
-│       └──────────────┴─────────────┴────────────────┘          │
-│                           │                                     │
-│                    ┌──────┴──────┐                              │
-│                    │  PostgreSQL │  (n8n 워크플로 DB)            │
-│                    │   :5432     │                              │
-│                    └─────────────┘                              │
-└─────────────────────────────────────────────────────────────────┘
-
-외부 데이터 소스:
-  - 네이버 뉴스 API
-  - 네이버 카페 API
-  - DART (금융감독원 전자공시)
-```
-
+[![jemog-eobs-eum-(4).png](https://i.postimg.cc/WbBFnnzs/jemog-eobs-eum-(4).png)](https://postimg.cc/fJvRWYYP)
 ### 기술 스택 선정 이유
 
 | 컴포넌트 | 선택 | 이유 |
@@ -246,37 +222,7 @@ services:
 
 n8n으로 구현한 수집 워크플로 `ingest_docs.workflow.json`의 흐름입니다.
 
-```
-[Webhook Trigger]
-    POST /webhook/ingest-docs
-    body: { "query": "SK하이닉스", "days": 7 }
-        ↓
-[Build Date Window]
-    오늘로부터 N일 전 날짜 계산
-        ↓ (병렬 분기)
-┌─────────────────┬──────────────────┬─────────────────┐
-│ Fetch Naver News│ Fetch Naver Cafe │ Fetch DART List │
-│  (뉴스 API)     │  (카페 API)       │  (공시 API)      │
-└────────┬────────┴────────┬─────────┴────────┬────────┘
-         └────────────────┬┘                  │
-                          ↓                    │
-               [Normalize Merge]  ←────────────┘
-                 3개 소스 통합, HTML 정제, 포맷 표준화
-                          ↓
-               [Split → Segments]
-                 문단/문장 단위로 분할 (≤800자)
-                          ↓
-               [Ollama Embedding]
-                 BGE-m3로 1024차원 벡터 변환
-                          ↓
-               [Build Qdrant Point]
-                 SHA-256 해시 ID 생성 + 페이로드 구성
-                          ↓
-               [Qdrant Upsert]
-                 벡터 DB에 저장 (중복 시 덮어쓰기)
-                          ↓
-                  [Done] → {status: "ok"}
-```
+[![jemog-eobs-eum-(5).png](https://i.postimg.cc/B67dr3hZ/jemog-eobs-eum-(5).png)](https://postimg.cc/hzxymkWN)
 
 ### n8n 워크플로 JSON 구조 이해하기
 
