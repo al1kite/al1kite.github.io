@@ -1,14 +1,13 @@
 ---
 layout: post
-title: "ShortURL History Log 성능 최적화: 3분 → 300ms, 600배 개선기"
+title: "ShortURL History Log 성능 최적화: 3분 → 300ms"
 comments: true
 excerpt: "매 요청마다 국가별 IP를 처음부터 순회하던 구조를 Spring Cache + 이진 탐색 + 배치 사전 집계로 재설계해 처리 시간을 3분에서 300ms로 단축한 과정을 기록합니다."
 date: 2026-02-27
 categories: [Server]
 tags: [Performance, MongoDB, BinarySearch, BatchProcessing, SpringBoot, Optimization, Index]
+mermaid: true
 ---
-
-# ShortURL History Log 성능 최적화: 3분 → 300ms, 600배 개선기
 
 ## 들어가며
 
@@ -123,6 +122,23 @@ IPv4 주소가 4개의 8비트(옥텟)로 구성되므로, 각 옥텟을 비트 
 ```
 
 **로그 1,000건 × CountryIp 20만 건 = 약 2억 번의 비교 연산**이 매 API 호출마다 발생했습니다. 이것이 3분이라는 응답 시간의 원인이었습니다.
+
+```mermaid
+flowchart TD
+    A["통계 API 요청"] --> B["HistoryLog 전체 조회 — 수천 건"]
+    B --> C{"각 로그마다 반복"}
+    C -->|"로그 1건"| D["CountryIp 20만 건 순차 탐색"]
+    D --> C
+    C -->|"전부 완료"| E["국가별 카운트 집계"]
+    E --> F["응답 반환 — 약 3분"]
+
+    style A fill:#dbeafe,stroke:#2563eb
+    style C fill:#fef3c7,stroke:#d97706
+    style D fill:#fee2e2,stroke:#dc2626
+    style F fill:#fee2e2,stroke:#dc2626
+```
+
+> 핵심 병목: 1,000건 x 200,000건 = **2억 번 비교** — 매 API 호출마다 반복
 
 ---
 
@@ -550,13 +566,34 @@ if (index < 0) {
 
 이것은 전형적인 **CQRS(Command Query Responsibility Segregation)** 패턴의 적용 대상이었습니다.
 
-```
-[기존: API 호출 시점에 모든 것을 처리]
-  요청 → 로그 전체 조회 → IP 변환 → 집계 → 응답 (3초)
+**Before — API 호출 시 모든 것을 동기 처리**
 
-[변경: 쓰기(배치)와 읽기(API)를 분리]
-  배치: 새 로그만 조회 → IP 변환 → 집계 결과 저장
-  API:  저장된 집계 결과만 조회 → 응답 (300ms)
+```mermaid
+flowchart LR
+    R1["API 요청"] --> L1["로그 전체 조회"]
+    L1 --> I1["IP→국가 변환"]
+    I1 --> A1["집계"]
+    A1 --> S1["응답 ~3초"]
+
+    style R1 fill:#fee2e2,stroke:#dc2626
+    style S1 fill:#fee2e2,stroke:#dc2626
+```
+
+**After — CQRS: 배치(Write)와 API(Read) 분리**
+
+```mermaid
+flowchart TD
+    subgraph write ["Write — 배치 비동기"]
+        B2["새 로그만 조회"] --> I2["IP→국가 변환"]
+        I2 --> A2["집계 결과 MongoDB 저장"]
+    end
+    subgraph read ["Read — API 동기"]
+        R2["API 요청"] --> Q2["저장된 집계 결과 조회"]
+        Q2 --> S2["응답 ~300ms"]
+    end
+
+    style write fill:#eff6ff,stroke:#3b82f6
+    style read fill:#d1fae5,stroke:#059669
 ```
 
 ### CQRS 패턴의 원론적 이해
@@ -1355,6 +1392,18 @@ public void getShortUrlHistoryCntUpdate() {
 | 로그 처리 시점 | API 호출 시 | API 호출 시 | API 호출 시 | **배치 사전처리** |
 | 통계 조회 | 로그 전체 재계산 | 로그 전체 재계산 | 로그 전체 재계산 | **_id 조회 1건** |
 | **응답 시간** | **~3분** | **~1분 30초** | **~3초** | **~300ms** |
+
+```mermaid
+flowchart LR
+    A["기존\n180초"] -->|"캐싱\nx2"| B["1차\n90초"]
+    B -->|"이진탐색\nx30"| C["2차\n3초"]
+    C -->|"배치+CQRS\nx10"| D["최종\n0.3초"]
+
+    style A fill:#fee2e2,stroke:#dc2626
+    style B fill:#fed7aa,stroke:#ea580c
+    style C fill:#fef3c7,stroke:#ca8a04
+    style D fill:#d1fae5,stroke:#059669
+```
 
 최종적으로 **3분 → 300ms**로, 약 **600배의 성능 개선**을 달성했습니다.
 
