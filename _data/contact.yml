@@ -16,10 +16,6 @@
   icon: "fa-solid fa-calendar-check"
   url: 'https://al1kite.notion.site/'                  # Fill with your Linkedin homepage
 
-- type: cs-study
-  icon: "fas fa-book"
-  url: 'https://al1kite.github.io/cs-study/'
-
 # Uncomment and complete the url below to enable more contact options
 #
 #- type: rss
