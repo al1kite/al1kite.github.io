@@ -6,12 +6,11 @@ excerpt: ""
 date: 2023-10-20
 categories: [Server]
 tags: [RestDocs , Swagger , SpringBoot, ErrorResponse]
-thumbnail: https://github.com/cocone-m/techup.github.io/assets/102217402/b1acdc35-885f-4444-9c44-fee9bcbdd00a
 ---
 
-안녕하세요, SYF Web 팀 인턴 정다연 입니다. 🙇🏻‍♀️ 
+안녕하세요, Web 팀 인턴 정다연 입니다. 🙇🏻‍♀️
 
-Hello Cocone 작업 중 서버에 log 로만 error message 를 남길 뿐, 
+사내 포털 작업 중 서버에 log 로만 error message 를 남길 뿐, 
 Front 에 Error Message 를 정확하게 넘겨주지 않아 error 발생 시 
 log 를 항상 확인해야 하는 번거로움이 있어 Error Response 관련 여러 테스트를 진행하게 되었습니다.
 
@@ -25,7 +24,7 @@ log 를 항상 확인해야 하는 번거로움이 있어 Error Response 관련 
 
 들어가기에 앞서 컨트롤러에서 발생한 예외를 처리하기 위해 Spring이 따르는 흐름을 살펴보겠습니다.
 
-![img](https://github.com/cocone-m/techup.github.io/assets/102217402/8d709cd4-675a-4c3e-85a4-0d8d550f51e0)
+<!-- 이미지 생략 -->
 
 1. 먼저 Spring은 `@Controller` 혹은 `@ControllerAdvice` 가 붙은 클래스 내 에서 예외 처리기(`@ExceptionHandler`가 붙은 메서드) 를 검색합니다. (`ExceptionHandlerExceptionResolver` 참조)
 2. 그런 다음 던져진 예외가 `@ResponseStatus` 처리되었거나 `ResponseStatusException`에서 파생되었는지 확인합니다.(`ResponseStatusExceptionResolver` 참조)
@@ -95,7 +94,7 @@ response body 값으로 함께 보내 제어해줍니다.
 
 
 <center>
-<img width="500" alt="" src="https://github.com/cocone-m/techup.github.io/assets/102217402/b3123caa-2a9f-4462-990b-c218c8692cd1">
+<!-- 이미지 생략 -->
 </center>
 Spring Boot 는 전역 예외 처리를 적용할 수 있는 `@ControllerAdvice`와 `@RestControllerAdvice` 에노테이션을 제공하고 있습니다.
 공식 문서에 따르면 `RestControllerAdvice`는 `@ControllerAdvice`에 `@ResponseBody`가 포함된 개념입니다.
@@ -179,7 +178,7 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
 <br> 즉, 일단 요청이 컨트롤러에 도달한 후 예외 발생 및 처리를 하는 과정으로 작동합니다.
 
 <center>
-<img width="450" alt="" src="https://github.com/cocone-m/techup.github.io/assets/102217402/df30c600-bcec-44d0-977e-965e38356fc8">
+<!-- 이미지 생략 -->
 </center>
 
 하지만 Spring Boot Security는 요청이 controller 에 도달하기 전에 `filterChain`에서 예외를 발생시킵니다. 
@@ -198,7 +197,7 @@ This filter is necessary because it provides the bridge between Java exceptions 
 > This filter does not do any actual security enforcement.
 
 
-![img](https://github.com/cocone-m/techup.github.io/assets/102217402/c8fdc809-8f08-44ed-84f6-15fb14b8c5d4)
+<!-- 이미지 생략 -->
 
 우선적으로 `AuthenticationException`를 handling 해보겠습니다.
 
@@ -360,9 +359,9 @@ public class SecurityConfig {
 
 
 
-![img](https://github.com/cocone-m/techup.github.io/assets/102217402/abca6c51-5510-42ff-9206-3fadb2bcba61)
+<!-- 이미지 생략 -->
 
-![img](https://github.com/cocone-m/techup.github.io/assets/102217402/91ffe697-0f4c-4502-956d-31ccac774405)
+<!-- 이미지 생략 -->
 
 ## 문서화 방법 : Swagger vs RestDocs
 
@@ -443,7 +442,7 @@ public @interface ErrorResponses {
 ```
 
 
-Hello Cocone 는 현재 Springfox 를 기준으로 프로젝트가 구성되어 있습니다.
+사내 포털 는 현재 Springfox 를 기준으로 프로젝트가 구성되어 있습니다.
 
 Springfox 라이브러리를 기준으로 Swagger 상에 에러코드를 제어해 문서화 하는 방식에 대한 문서가 구글링 해도 자세히 서술되지 않는 경우가 많아 구현에 있어 어려움을 겪은 바가 있어 해당 부분에 포커스해 작성하겠습니다.
 
@@ -540,7 +539,7 @@ public class OperationBuilderPluginImpl implements OperationBuilderPlugin {
 이제 Swagger 상에 우리가 제어한 ErrorCode 가 Response 값으로 추가된 것을 확인할 수 있습니다.
 
 <center>
-<img width="944" alt="" src="https://github.com/cocone-m/techup.github.io/assets/102217402/d49d9956-70bf-4a3b-99a1-34e5c4d625a1">
+<!-- 이미지 생략 -->
 </center>
 
 Springdoc-openapi 는 swagger-ui 상에 제공할 값을 커스터마이징 할 수 있는 `customize()` 메소드를 지원합니다.

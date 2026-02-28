@@ -14,7 +14,7 @@ tags: [Performance, MongoDB, BinarySearch, BatchProcessing, SpringBoot, Optimiza
 
 인턴으로 합류해 가장 처음 마주한 운영 이슈가 ShortURL History Log가 너무 느리다는 것이었습니다.
 
-사내 포털에서 제공하는 ShortURL 서비스는 단축 URL을 생성하고, 해당 URL의 클릭 로그를 수집해 국가별 통계를 보여주는 기능을 포함하고 있었습니다. 문제는 이 통계 API의 응답 시간이 **약 3분**이었다는 것입니다. 사내 서비스라 사용자 수가 많지는 않았지만, 통계 페이지에 진입할 때마다 3분을 기다려야 하는 건 분명 비정상이었습니다.
+사내에서 운영하는 URL 단축 서비스는 단축 URL을 생성하고, 해당 URL의 클릭 로그를 수집해 국가별 통계를 보여주는 기능을 포함하고 있었습니다. 문제는 이 통계 API의 응답 시간이 **약 3분**이었다는 것입니다. 사내 서비스라 사용자 수가 많지는 않았지만, 통계 페이지에 진입할 때마다 3분을 기다려야 하는 건 분명 비정상이었습니다.
 
 이 글에서는 왜 3분이나 걸렸는지를 진단하고, 단순히 서버 스펙을 올리는 것이 아닌 **데이터 구조 자체의 병목**을 찾아 해결하기까지의 전 과정을 실제 코드와 함께 공유하려 합니다.
 
@@ -36,8 +36,8 @@ ShortURL 서비스는 다음과 같은 기능을 제공합니다.
 MariaDB (Core)
 ├── ShortUrlRepository         ── 단축 URL CRUD
 ├── ShortUrlQueryRepository    ── QueryDSL 기반 조건검색·페이징
-├── CompanyNameRepository      ── 회사명 마스터
-└── LocationInfoRepository     ── 거점 정보 마스터
+├── OrganizationRepository      ── 조직명 마스터
+└── ServiceInfoRepository     ── 사이트 정보 마스터
 
 MongoDB (Log & Cache)
 ├── CountryIpRepository                ── IP 대역 → 국가 매핑 (약 20만 건)
@@ -1283,9 +1283,9 @@ mongotop 5  # 5초 간격으로 갱신
 
 # 출력 예시:
                     ns    total    read    write
-shorturl.countryIp        450ms    450ms      0ms
-shorturl.historyLog       120ms     80ms     40ms
-shorturl.shortUrlLogCount  30ms      5ms     25ms
+urlsvc.countryIp        450ms    450ms      0ms
+urlsvc.historyLog       120ms     80ms     40ms
+urlsvc.shortUrlLogCount  30ms      5ms     25ms
 ```
 
 배치 실행 중에 `countryIp`의 read 시간이 높다면 캐시 워밍이 아직 안 된 것이고, `shortUrlLogCount`의 write 시간이 높다면 집계 결과 저장이 병목인 것입니다.
@@ -1314,7 +1314,7 @@ management:
 ```bash
 # Actuator 엔드포인트로 특정 API의 응답 시간 확인
 curl localhost:8080/actuator/metrics/http.server.requests \
-  -d 'tag=uri:/api/shorturl/history/{urlSeq}'
+  -d 'tag=uri:/api/url/history/{urlId}'
 
 # 출력 예시:
 # COUNT: 1247

@@ -14,7 +14,7 @@ tags: [Refactoring, JPA, QueryDSL, TreeStructure, CompositeKey, SpringBoot, Data
 
 사내 포털의 부서(Dept) 관리 페이지를 리뉴얼하면서, 기존 부서 데이터 구조의 근본적인 문제를 발견하게 되었습니다.
 
-부서 데이터는 본질적으로 **트리(계층) 구조**입니다. "코코네M > SYF > Web팀"처럼 상위-하위 관계가 존재하고, 이 관계를 기반으로 조직도를 렌더링하거나, 특정 부서의 하위 부서를 모두 조회하거나, 메달 지급 대상자를 찾는 등의 기능이 필요합니다.
+부서 데이터는 본질적으로 **트리(계층) 구조**입니다. "A사 > DEV > 웹개발팀"처럼 상위-하위 관계가 존재하고, 이 관계를 기반으로 조직도를 렌더링하거나, 특정 부서의 하위 부서를 모두 조회하거나, 메달 지급 대상자를 찾는 등의 기능이 필요합니다.
 
 하지만 기존 구조에서는 이 상위-하위 관계가 명시적으로 정의되어 있지 않았고, 조회 시 이중 for문으로 전체 데이터를 반복 순회하고 있었습니다. 특히 **depth(계층 깊이) 계산 오류**, **하위 부서 탐색의 비효율**, **부서-사원 간 참조 정합성 부재** 등의 문제가 리뉴얼 과정에서 여러 곳에서 드러났습니다.
 
@@ -33,7 +33,7 @@ tags: [Refactoring, JPA, QueryDSL, TreeStructure, CompositeKey, SpringBoot, Data
 ├── 조직도 렌더링        ── 부서 트리를 UI로 표시
 ├── 메달 지급 대상자 조회  ── 특정 부서 + 모든 하위 부서의 사원 목록
 ├── Navigation 메뉴      ── 권한 기반 계층형 메뉴 구성
-├── 크루(Crew) 관리       ── 사원의 소속 부서 정보
+├── 직원(Employee) 관리       ── 사원의 소속 부서 정보
 └── 권한(Role) 관리       ── 부서 단위 권한 부여
 ```
 
@@ -41,7 +41,7 @@ tags: [Refactoring, JPA, QueryDSL, TreeStructure, CompositeKey, SpringBoot, Data
 
 ```
 Dept (부서)
-  ├── DeptCrew (부서-사원 매핑, 복합 PK: deptId + crewSeq)
+  ├── DeptEmployee (부서-사원 매핑, 복합 PK: deptId + empSeq)
   │     └── Crew (사원)
   ├── Role (권한: 사원별 부서 단위 권한)
   └── Navigation (계층형 메뉴, 별도 트리)
@@ -73,7 +73,7 @@ CREATE TABLE dept (
 );
 ```
 
-**SYF**와 **Web팀**이 상위-하위 관계라는 정보가 테이블 어디에도 없었습니다.
+**개발본부**와 **Web팀**이 상위-하위 관계라는 정보가 테이블 어디에도 없었습니다.
 
 ### 기존 트리 빌드: 이중 for문
 
@@ -139,8 +139,8 @@ private List<String> getSubAllDeptIdList(List<String> deptIdList) {
 private List<String> getSubDeptIdList(List<String> deptIdList) {
     List<String> allDeptIdList = new ArrayList<>();
 
-    for (String medalDeptId : deptIdList) {
-        Dept parentDept = deptRepository.findByDeptId(medalDeptId);
+    for (String rewardDeptId : deptIdList) {
+        Dept parentDept = deptRepository.findByDeptId(rewardDeptId);
         Map<String, DeptInfo> allDeptMap = deptExecutor.getAllMap();
         List<Dept> allDepts = deptInfoMapper
             .toEntity(allDeptMap.get(parentDept.getDeptId()).getChildren());
@@ -218,12 +218,12 @@ WHERE lft >= 2 AND rgt <= 11;
 CREATE TABLE dept (
     dept_id   VARCHAR(50) PRIMARY KEY,
     dept_name VARCHAR(100) NOT NULL,
-    path      VARCHAR(500) NOT NULL  -- 예: '/coconeM/SYF/Web'
+    path      VARCHAR(500) NOT NULL  -- 예: '/companyA/개발본부/Web'
 );
 
 -- 하위 전체 조회: LIKE 패턴 한 줄
 SELECT * FROM dept
-WHERE path LIKE '/coconeM/SYF/%';
+WHERE path LIKE '/companyA/개발본부/%';
 ```
 
 ```
@@ -254,7 +254,7 @@ CREATE TABLE dept_closure (
 -- 하위 전체 조회: JOIN 한 번
 SELECT d.* FROM dept d
 JOIN dept_closure c ON d.dept_id = c.descendant_id
-WHERE c.ancestor_id = 'SYF';
+WHERE c.ancestor_id = '개발본부';
 ```
 
 ```
@@ -679,21 +679,21 @@ while (!navigations.isEmpty()) {
 
 ---
 
-## 복합 PK 설계: DeptCrewId
+## 복합 PK 설계: DeptEmployeeId
 
 ### 왜 복합 PK가 필요했는가
 
-부서와 사원의 매핑 테이블 `DeptCrew`에는 **한 사원이 한 부서에 한 번만 소속된다**는 비즈니스 규칙이 있었습니다. 이를 DB 레벨에서 보장하기 위해 **복합 기본키**를 도입했습니다.
+부서와 사원의 매핑 테이블 `DeptEmployee`에는 **한 사원이 한 부서에 한 번만 소속된다**는 비즈니스 규칙이 있었습니다. 이를 DB 레벨에서 보장하기 위해 **복합 기본키**를 도입했습니다.
 
 ```java
 /**
  * Multi Key
  */
-public class DeptCrewId implements Serializable {
+public class DeptEmployeeId implements Serializable {
     // 부서 식별번호
     private String deptId;
     // 사원 식별번호
-    private int crewSeq;
+    private int empSeq;
 }
 ```
 
@@ -704,7 +704,7 @@ public class DeptCrewId implements Serializable {
 PRIMARY KEY (dept_id, crew_seq)
 ```
 
-| 시나리오 | 단일 PK (AUTO_INCREMENT) | 복합 PK (deptId + crewSeq) |
+| 시나리오 | 단일 PK (AUTO_INCREMENT) | 복합 PK (deptId + empSeq) |
 |---|---|---|
 | 같은 사원을 같은 부서에 중복 등록 | 가능 (ID만 다르면 됨) | **불가능** (PK 중복) |
 | 이 사원이 이 부서에 있는가? 조회 | WHERE dept_id=? AND crew_seq=? (인덱스 필요) | **PK 자체가 인덱스** |
@@ -726,25 +726,25 @@ Map<EntityKey, Object> entityCache;
 // PK 값의 동등성 비교에 equals/hashCode가 사용됨
 ```
 
-만약 `DeptCrewId`에 `equals()`/`hashCode()`를 재정의하지 않으면, Object의 기본 구현(메모리 주소 비교)이 사용됩니다. 그러면 **같은 (deptId, crewSeq) 값을 가진 두 PK 객체가 서로 다른 것으로 판단**되어, 1차 캐시에서 엔티티를 찾지 못하는 문제가 발생합니다.
+만약 `DeptEmployeeId`에 `equals()`/`hashCode()`를 재정의하지 않으면, Object의 기본 구현(메모리 주소 비교)이 사용됩니다. 그러면 **같은 (deptId, empSeq) 값을 가진 두 PK 객체가 서로 다른 것으로 판단**되어, 1차 캐시에서 엔티티를 찾지 못하는 문제가 발생합니다.
 
 ```java
-public class DeptCrewId implements Serializable {
+public class DeptEmployeeId implements Serializable {
     private String deptId;
-    private int crewSeq;
+    private int empSeq;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DeptCrewId that = (DeptCrewId) o;
-        return crewSeq == that.crewSeq
+        DeptEmployeeId that = (DeptEmployeeId) o;
+        return empSeq == that.empSeq
             && Objects.equals(deptId, that.deptId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(deptId, crewSeq);
+        return Objects.hash(deptId, empSeq);
     }
 }
 ```
@@ -756,20 +756,20 @@ JPA에서 복합 PK를 구현하는 방법은 두 가지입니다.
 ```java
 // 방식 1: @IdClass — 우리가 선택한 방식
 @Entity
-@IdClass(DeptCrewId.class)
-public class DeptCrew {
+@IdClass(DeptEmployeeId.class)
+public class DeptEmployee {
     @Id
     private String deptId;
     @Id
-    private int crewSeq;
+    private int empSeq;
     // ... 다른 필드들
 }
 
 // 방식 2: @EmbeddedId
 @Entity
-public class DeptCrew {
+public class DeptEmployee {
     @EmbeddedId
-    private DeptCrewId id;
+    private DeptEmployeeId id;
     // ... 다른 필드들
 }
 ```
@@ -777,25 +777,25 @@ public class DeptCrew {
 | 비교 항목 | @IdClass | @EmbeddedId |
 |---|---|---|
 | 필드 접근 | `deptCrew.getDeptId()` 직접 접근 | `deptCrew.getId().getDeptId()` 중첩 접근 |
-| JPQL 쿼리 | `SELECT d.deptId FROM DeptCrew d` | `SELECT d.id.deptId FROM DeptCrew d` |
+| JPQL 쿼리 | `SELECT d.deptId FROM DeptEmployee d` | `SELECT d.id.deptId FROM DeptEmployee d` |
 | PK 클래스 어노테이션 | 없음 | `@Embeddable` 필요 |
 | Spring Data JPA 호환 | 좋음 | 좋음 |
 | 가독성 | PK 필드가 엔티티에 직접 노출 | PK가 하나의 객체로 캡슐화 |
 
-`@IdClass`를 선택한 이유는 **기존 코드에서 `deptId`, `crewSeq`를 엔티티 필드로 직접 참조하는 곳이 많았기 때문**입니다. `@EmbeddedId`로 변경하면 `.getId().getDeptId()` 형태로 모든 참조를 수정해야 하므로, 마이그레이션 비용이 더 컸습니다.
+`@IdClass`를 선택한 이유는 **기존 코드에서 `deptId`, `empSeq`를 엔티티 필드로 직접 참조하는 곳이 많았기 때문**입니다. `@EmbeddedId`로 변경하면 `.getId().getDeptId()` 형태로 모든 참조를 수정해야 하므로, 마이그레이션 비용이 더 컸습니다.
 
 **Hibernate 1차 캐시에서의 복합 PK 동작**
 
 Hibernate의 `EntityManager.find()`를 호출하면, 내부적으로 다음과 같은 과정이 진행됩니다.
 
 ```
-entityManager.find(DeptCrew.class, new DeptCrewId("SYF", 142))
+entityManager.find(DeptEmployee.class, new DeptEmployeeId("개발본부", 142))
 
-1. DeptCrewId("SYF", 142) 객체 생성
+1. DeptEmployeeId("개발본부", 142) 객체 생성
 2. 1차 캐시(PersistenceContext)에서 EntityKey로 조회
-   - EntityKey = (DeptCrew.class, DeptCrewId("SYF", 142))
-   - Map.get() 호출 → DeptCrewId.hashCode()로 버킷 찾기
-   - 버킷 내에서 DeptCrewId.equals()로 정확한 엔티티 찾기
+   - EntityKey = (DeptEmployee.class, DeptEmployeeId("개발본부", 142))
+   - Map.get() 호출 → DeptEmployeeId.hashCode()로 버킷 찾기
+   - 버킷 내에서 DeptEmployeeId.equals()로 정확한 엔티티 찾기
 3. 캐시에 있으면 → 바로 반환 (DB 조회 없음)
 4. 캐시에 없으면 → SELECT 쿼리 실행 → 캐시에 저장 → 반환
 ```
@@ -804,7 +804,7 @@ entityManager.find(DeptCrew.class, new DeptCrewId("SYF", 142))
 
 **Serializable 인터페이스가 필요한 이유**
 
-`DeptCrewId`가 `Serializable`을 구현하는 것은 JPA 스펙의 요구사항입니다. 그 이유는 크게 두 가지입니다.
+`DeptEmployeeId`가 `Serializable`을 구현하는 것은 JPA 스펙의 요구사항입니다. 그 이유는 크게 두 가지입니다.
 
 1. **2차 캐시(L2 Cache)**: Hibernate의 2차 캐시는 엔티티를 세션 간에 공유합니다. 이때 PK 객체가 캐시 키로 직렬화/역직렬화될 수 있으므로 `Serializable`이 필요합니다.
 
@@ -814,11 +814,11 @@ entityManager.find(DeptCrew.class, new DeptCrewId("SYF", 142))
 
 ```java
 // serialVersionUID를 명시적으로 선언하면 직렬화 호환성을 제어할 수 있음
-public class DeptCrewId implements Serializable {
+public class DeptEmployeeId implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String deptId;
-    private int crewSeq;
+    private int empSeq;
     // ...
 }
 ```
@@ -827,31 +827,31 @@ public class DeptCrewId implements Serializable {
 
 ### 복합 PK의 인덱스 효과
 
-`(deptId, crewSeq)` 복합 PK를 설정하면, DB가 자동으로 이 두 컬럼의 **복합 인덱스**를 생성합니다.
+`(deptId, empSeq)` 복합 PK를 설정하면, DB가 자동으로 이 두 컬럼의 **복합 인덱스**를 생성합니다.
 
 ```sql
 -- 이 쿼리들이 모두 PK 인덱스를 활용
-SELECT * FROM dept_crew WHERE dept_id = 'SYF';                    -- 왼쪽 접두사 매칭
-SELECT * FROM dept_crew WHERE dept_id = 'SYF' AND crew_seq = 142; -- 정확 매칭
-SELECT * FROM dept_crew WHERE dept_id IN ('SYF', 'WEB');          -- IN 절
+SELECT * FROM dept_crew WHERE dept_id = '개발본부';                    -- 왼쪽 접두사 매칭
+SELECT * FROM dept_crew WHERE dept_id = '개발본부' AND crew_seq = 142; -- 정확 매칭
+SELECT * FROM dept_crew WHERE dept_id IN ('개발본부', 'WEB');          -- IN 절
 ```
 
 실제 코드에서 이 인덱스가 활용되는 곳:
 
 ```java
 // 메달 지급 대상자 조회: 여러 부서의 사원을 한 번에 조회
-List<DeptCrew> deptCrewList = deptCrewRepository
-    .findDeptCrewsByDeptIdIsInAndCrewSeqIsNotAndIsLeaderFalse(
+List<DeptEmployee> deptCrewList = deptCrewRepository
+    .findDeptEmployeesByDeptIdIsInAndCrewSeqIsNotAndIsLeaderFalse(
         deptIdList,     // 하위 부서 ID 전체 목록
-        loginCrewSeq    // 조회자 본인 제외
+        loginEmpSeq    // 조회자 본인 제외
     );
 ```
 
 이 쿼리는 `deptId IN (...)` 조건을 사용하므로, **복합 PK의 왼쪽 컬럼(deptId) 인덱스를 타서 효율적으로 조회**됩니다.
 
-### DeptCrewId에서 deptId가 String인 이유
+### DeptEmployeeId에서 deptId가 String인 이유
 
-`deptId`가 `Long`이 아닌 `String`인 것은 기존 시스템의 설계 때문입니다. 부서 ID가 **SYF**, **WEB** 같은 **의미 있는 문자열 코드**로 관리되고 있었고, 이 규칙을 변경하는 것은 기존 데이터와의 호환성 문제가 있어 유지했습니다.
+`deptId`가 `Long`이 아닌 `String`인 것은 기존 시스템의 설계 때문입니다. 부서 ID가 **개발본부**, **WEB** 같은 **의미 있는 문자열 코드**로 관리되고 있었고, 이 규칙을 변경하는 것은 기존 데이터와의 호환성 문제가 있어 유지했습니다.
 
 문자열 PK의 단점(인덱스 크기 증가, 비교 연산 비용)이 있지만, 부서 수가 수백 건 수준이므로 실질적인 성능 영향은 미미합니다. 오히려 **사람이 읽기 쉬운 ID**라는 장점이 운영에서 더 유용했습니다.
 
@@ -887,36 +887,36 @@ private List<String> getSubAllDeptIdList(List<String> deptIdList) {
 **BFS 방식의 동작을 그림으로 보면:**
 
 ```
-시작: [코코네M]
+시작: [A사]
 
-1단계 getSubDeptIdList([코코네M]):
-  → [SYF, 경영지원]
-  allDeptIdList = [코코네M, SYF, 경영지원]
+1단계 getSubDeptIdList([A사]):
+  → [개발본부, 경영지원]
+  allDeptIdList = [A사, 개발본부, 경영지원]
 
-2단계 getSubDeptIdList([SYF, 경영지원]):
+2단계 getSubDeptIdList([개발본부, 경영지원]):
   → [Web팀, App팀, 인사팀]
-  allDeptIdList = [코코네M, SYF, 경영지원, Web팀, App팀, 인사팀]
+  allDeptIdList = [A사, 개발본부, 경영지원, Web팀, App팀, 인사팀]
 
 3단계 getSubDeptIdList([Web팀, App팀, 인사팀]):
   → [] (더 이상 하위부서 없음)
   while 종료
 
-최종: [코코네M, SYF, 경영지원, Web팀, App팀, 인사팀]
+최종: [A사, 개발본부, 경영지원, Web팀, App팀, 인사팀]
 ```
 
-이 전체 부서 ID 목록으로 `DeptCrew` 테이블에서 사원을 조회합니다.
+이 전체 부서 ID 목록으로 `DeptEmployee` 테이블에서 사원을 조회합니다.
 
 ```java
 // 수집된 모든 부서 ID로 사원 한 번에 조회
-List<DeptCrew> deptCrewList = deptCrewRepository
-    .findDeptCrewsByDeptIdIsInAndCrewSeqIsNotAndIsLeaderFalse(
-        deptIdList,      // [코코네M, SYF, 경영지원, Web팀, App팀, 인사팀]
-        loginCrewSeq     // 본인 제외
+List<DeptEmployee> deptCrewList = deptCrewRepository
+    .findDeptEmployeesByDeptIdIsInAndCrewSeqIsNotAndIsLeaderFalse(
+        deptIdList,      // [A사, 개발본부, 경영지원, Web팀, App팀, 인사팀]
+        loginEmpSeq     // 본인 제외
     );
 
 // 사원 시퀀스만 추출
-List<Integer> crewSeqList = deptCrewList.stream()
-    .map(DeptCrew::getCrewSeq)
+List<Integer> empSeqList = deptCrewList.stream()
+    .map(DeptEmployee::getCrewSeq)
     .collect(Collectors.toList());
 ```
 
@@ -930,7 +930,7 @@ WITH RECURSIVE sub_depts AS (
     -- 앵커 멤버: 시작 부서
     SELECT dept_id, parent_dept_id, dept_name, depth
     FROM dept
-    WHERE dept_id = 'COCONEM'
+    WHERE dept_id = 'COMPANY_A'
 
     UNION ALL
 
@@ -945,12 +945,12 @@ SELECT dept_id FROM sub_depts;
 이 쿼리의 실행 과정을 풀어보면 이렇습니다.
 
 ```
-1단계 (앵커): dept_id = 'COCONEM' → {코코네M}
-2단계 (재귀): parent_dept_id = 'COCONEM' → {SYF, 경영지원}
-3단계 (재귀): parent_dept_id IN ('SYF', '경영지원') → {Web팀, App팀, 인사팀}
+1단계 (앵커): dept_id = 'COMPANY_A' → {A사}
+2단계 (재귀): parent_dept_id = 'COMPANY_A' → {개발본부, 경영지원}
+3단계 (재귀): parent_dept_id IN ('개발본부', '경영지원') → {Web팀, App팀, 인사팀}
 4단계 (재귀): parent_dept_id IN ('Web팀', 'App팀', '인사팀') → {} (비어있음, 종료)
 
-결과: {코코네M, SYF, 경영지원, Web팀, App팀, 인사팀}
+결과: {A사, 개발본부, 경영지원, Web팀, App팀, 인사팀}
 ```
 
 **JPA/Spring Data에서 CTE를 사용하려면** 네이티브 쿼리를 작성해야 합니다.
@@ -1017,31 +1017,31 @@ CTE가 약 2.5배 빠르지만, 절대적인 차이는 6ms 수준입니다. 부�
 
 ```java
 @Transactional
-public Page<CrewDto> getMedalCrewList(CrewParamDto crewParamDto, Pageable pageable) {
+public Page<EmployeeDto> getRewardEmpList(EmployeeParamDto crewParamDto, Pageable pageable) {
     // Step 1. 로그인 사용자의 메달 지급 권한이 있는 부서 ID 추출
-    List<String> medalDeptIdList = this.getLoginCrewsMedalDeptIdList();
+    List<String> rewardDeptIdList = this.getLoginEmpRewardDeptIdList();
 
     // Step 2. 해당 부서의 모든 하위부서까지 포함
-    List<String> deptIdList = this.getSubAllDeptIdList(medalDeptIdList);
+    List<String> deptIdList = this.getSubAllDeptIdList(rewardDeptIdList);
 
-    // Step 3. DeptCrew 테이블에서 대상 사원 조회 (본인 제외, 리더 제외)
-    int loginCrewSeq = LoginManager.getUserDetails().getCrewSeq();
-    List<DeptCrew> deptCrewList = deptCrewRepository
-        .findDeptCrewsByDeptIdIsInAndCrewSeqIsNotAndIsLeaderFalse(
-            deptIdList, loginCrewSeq);
+    // Step 3. DeptEmployee 테이블에서 대상 사원 조회 (본인 제외, 리더 제외)
+    int loginEmpSeq = SecurityContextHolder.getContext().getEmpSeq();
+    List<DeptEmployee> deptCrewList = deptCrewRepository
+        .findDeptEmployeesByDeptIdIsInAndCrewSeqIsNotAndIsLeaderFalse(
+            deptIdList, loginEmpSeq);
 
-    // Step 4. crewSeq로 상세 정보 조회
-    List<Integer> crewSeqList = deptCrewList.stream()
-        .map(DeptCrew::getCrewSeq).collect(Collectors.toList());
-    crewParamDto.setCrewSeqList(crewSeqList);
+    // Step 4. empSeq로 상세 정보 조회
+    List<Integer> empSeqList = deptCrewList.stream()
+        .map(DeptEmployee::getCrewSeq).collect(Collectors.toList());
+    crewParamDto.setCrewSeqList(empSeqList);
 
     // Step 5. 코드 값을 한글로 변환 (캐싱된 참조 데이터 사용)
     HashMap<String, Map<String, String>> cacheCodeMap = getCacheCodeMap();
-    List<CrewDto> medalCrewList = crewQueryRepository
-        .findMedalCrewList(crewParamDto, pageable);
-    medalCrewList.forEach(crew -> changeCodeToKr(crew, cacheCodeMap));
+    List<EmployeeDto> rewardEmpList = crewQueryRepository
+        .findRewardEmpList(crewParamDto, pageable);
+    rewardEmpList.forEach(crew -> changeCodeToKr(crew, cacheCodeMap));
 
-    return new PageImpl<>(medalCrewList, pageable, totalCount);
+    return new PageImpl<>(rewardEmpList, pageable, totalCount);
 }
 ```
 
@@ -1070,60 +1070,60 @@ public Page<CrewDto> getMedalCrewList(CrewParamDto crewParamDto, Pageable pageab
 QueryDSL에서는 `BooleanExpression`을 조건별로 분리하고, null이면 무시하는 패턴으로 깔끔하게 해결합니다.
 
 ```java
-public class CrewQueryRepository {
+public class EmployeeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<CrewDto> findMedalCrewList(CrewParamDto param, Pageable pageable) {
+    public List<EmployeeDto> findRewardEmpList(EmployeeParamDto param, Pageable pageable) {
         return queryFactory
-            .select(Projections.constructor(CrewDto.class,
-                crew.crewSeq,
-                crew.crewName,
-                crew.deptId,
-                crew.dutyId,
-                crew.branchKey
+            .select(Projections.constructor(EmployeeDto.class,
+                employee.empSeq,
+                employee.empName,
+                employee.deptId,
+                employee.dutyId,
+                employee.branchKey
             ))
             .from(crew)
             .where(
-                crewSeqIn(param.getCrewSeqList()),
-                crewNameContains(param.getSearchKeyword()),
+                empSeqIn(param.getCrewSeqList()),
+                empNameContains(param.getSearchKeyword()),
                 dutyIdEq(param.getDutyId()),
                 branchKeyEq(param.getBranchKey())
             )
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
-            .orderBy(crew.crewName.asc())
+            .orderBy(employee.empName.asc())
             .fetch();
     }
 
     // 각 조건을 BooleanExpression으로 분리
-    private BooleanExpression crewSeqIn(List<Integer> crewSeqList) {
-        return crewSeqList != null && !crewSeqList.isEmpty()
-            ? crew.crewSeq.in(crewSeqList)
+    private BooleanExpression empSeqIn(List<Integer> empSeqList) {
+        return empSeqList != null && !empSeqList.isEmpty()
+            ? employee.empSeq.in(empSeqList)
             : null;  // null을 반환하면 where절에서 무시됨
     }
 
-    private BooleanExpression crewNameContains(String keyword) {
+    private BooleanExpression empNameContains(String keyword) {
         return StringUtils.hasText(keyword)
-            ? crew.crewName.contains(keyword)
+            ? employee.empName.contains(keyword)
             : null;
     }
 
     private BooleanExpression dutyIdEq(String dutyId) {
         return StringUtils.hasText(dutyId)
-            ? crew.dutyId.eq(dutyId)
+            ? employee.dutyId.eq(dutyId)
             : null;
     }
 
     private BooleanExpression branchKeyEq(String branchKey) {
         return StringUtils.hasText(branchKey)
-            ? crew.branchKey.eq(branchKey)
+            ? employee.branchKey.eq(branchKey)
             : null;
     }
 }
 ```
 
-QueryDSL의 `where()` 메서드는 **null인 조건을 자동으로 무시**합니다. 따라서 `crewNameContains(null)`이 null을 반환하면, 해당 조건은 SQL에 포함되지 않습니다. 이 패턴 덕분에 조건 조합마다 별도 메서드를 만들 필요가 없습니다.
+QueryDSL의 `where()` 메서드는 **null인 조건을 자동으로 무시**합니다. 따라서 `empNameContains(null)`이 null을 반환하면, 해당 조건은 SQL에 포함되지 않습니다. 이 패턴 덕분에 조건 조합마다 별도 메서드를 만들 필요가 없습니다.
 
 **카운트 쿼리 분리의 중요성**
 
@@ -1131,13 +1131,13 @@ QueryDSL의 `where()` 메서드는 **null인 조건을 자동으로 무시**합�
 
 ```java
 // 카운트 쿼리를 별도로 분리
-public long countMedalCrewList(CrewParamDto param) {
+public long countRewardEmpList(EmployeeParamDto param) {
     return queryFactory
-        .select(crew.count())
+        .select(employee.count())
         .from(crew)
         .where(
-            crewSeqIn(param.getCrewSeqList()),
-            crewNameContains(param.getSearchKeyword()),
+            empSeqIn(param.getCrewSeqList()),
+            empNameContains(param.getSearchKeyword()),
             dutyIdEq(param.getDutyId()),
             branchKeyEq(param.getBranchKey())
         )
@@ -1213,7 +1213,7 @@ public HashMap<String, Map<String, String>> getCacheCodeMap() {
 
 ```java
 // 캐싱된 Map으로 코드 → 한글 변환
-public void changeCodeToKr(CrewDto crewDto,
+public void changeCodeToKr(EmployeeDto crewDto,
                            HashMap<String, Map<String, String>> cacheCodeMap) {
     crewDto.setJobPart(cacheCodeMap.get("jobPartMap")
         .getOrDefault(toLowerCase(crewDto.getJobPart()), crewDto.getJobPart()));
@@ -1253,16 +1253,16 @@ private String toLowerCase(String str) {
 
 ```
 이동 전:
-코코네M (depth=1)
-├── SYF (depth=2)
+A사 (depth=1)
+├── 개발본부 (depth=2)
 │   └── Web팀 (depth=3)
 └── 경영지원 (depth=2)
 
 작업: Web팀을 경영지원 아래로 이동
 
 이동 후:
-코코네M (depth=1)
-├── SYF (depth=2)
+A사 (depth=1)
+├── 개발본부 (depth=2)
 └── 경영지원 (depth=2)
     └── Web팀 (depth=3)  ← parentId, depth 모두 변경 필요
 ```
@@ -1271,25 +1271,25 @@ private String toLowerCase(String str) {
 
 ```
 이동 전:
-코코네M (depth=1)
-├── SYF (depth=2)
+A사 (depth=1)
+├── 개발본부 (depth=2)
 │   ├── Web팀 (depth=3)
 │   │   └── 프론트엔드 (depth=4)
 │   └── App팀 (depth=3)
 └── 경영지원 (depth=2)
 
-작업: SYF를 경영지원 아래로 이동
+작업: 개발본부를 경영지원 아래로 이동
 
 이동 후:
-코코네M (depth=1)
+A사 (depth=1)
 └── 경영지원 (depth=2)
-    └── SYF (depth=3)          ← depth 2→3
+    └── 개발본부 (depth=3)          ← depth 2→3
         ├── Web팀 (depth=4)    ← depth 3→4
         │   └── 프론트엔드 (depth=5)  ← depth 4→5
         └── App팀 (depth=4)    ← depth 3→4
 ```
 
-SYF를 이동하면 SYF 자신 + 모든 후손(Web팀, 프론트엔드, App팀)의 depth를 **일괄적으로 +1** 해야 합니다. 이 갱신이 **하나의 트랜잭션 안에서 원자적으로** 실행되어야 합니다.
+개발본부를 이동하면 개발본부 자신 + 모든 후손(Web팀, 프론트엔드, App팀)의 depth를 **일괄적으로 +1** 해야 합니다. 이 갱신이 **하나의 트랜잭션 안에서 원자적으로** 실행되어야 합니다.
 
 ```java
 @Transactional
@@ -1323,11 +1323,11 @@ public void reparentDept(String deptId, String newParentId) {
 ```
 시나리오: 관리자 A와 관리자 B가 동시에 부서 구조를 수정
 
-시점 1: 관리자 A가 SYF를 경영지원 아래로 이동 시작
-시점 2: 관리자 B가 Web팀을 SYF 밖으로 이동 시작
+시점 1: 관리자 A가 개발본부를 경영지원 아래로 이동 시작
+시점 2: 관리자 B가 Web팀을 개발본부 밖으로 이동 시작
 
 관리자 A의 작업:
-  - SYF + 모든 하위부서의 depth 갱신 (Web팀 포함)
+  - 개발본부 + 모든 하위부서의 depth 갱신 (Web팀 포함)
 
 관리자 B의 작업:
   - Web팀의 parentId를 다른 부서로 변경
@@ -1363,12 +1363,12 @@ public class Dept {
 
 ```sql
 -- 관리자 A의 UPDATE (먼저 실행)
-UPDATE dept SET depth = 3, version = 2 WHERE dept_id = 'SYF' AND version = 1;
+UPDATE dept SET depth = 3, version = 2 WHERE dept_id = '개발본부' AND version = 1;
 -- 영향받은 행: 1 (성공)
 
 -- 관리자 B의 UPDATE (나중에 실행)
 UPDATE dept SET parent_dept_id = 'NEW', depth = 2, version = 2
-WHERE dept_id = 'SYF' AND version = 1;
+WHERE dept_id = '개발본부' AND version = 1;
 -- 영향받은 행: 0 → OptimisticLockException 발생!
 ```
 
@@ -1394,7 +1394,7 @@ Dept findByDeptIdForUpdate(@Param("deptId") String deptId);
 
 ```sql
 -- 실제 실행되는 SQL
-SELECT * FROM dept WHERE dept_id = 'SYF' FOR UPDATE;
+SELECT * FROM dept WHERE dept_id = '개발본부' FOR UPDATE;
 -- 이 행이 잠기므로, 다른 트랜잭션은 이 행을 읽거나 수정할 수 없음
 ```
 
@@ -1427,13 +1427,13 @@ SELECT * FROM dept WHERE dept_id = 'SYF' FOR UPDATE;
 | 부서 관계 | 추정 (이중 for문) | parentId FK 명시 |
 | 트리 빌드 | O(n^2) 이중 for문 | O(n) 단일 순회 (makeChildStruct) |
 | depth 관리 | 없음 (동적 계산) | DB 컬럼 + 일회성 마이그레이션 |
-| 부서-사원 매핑 | 단일 PK | 복합 PK (deptId + crewSeq) |
+| 부서-사원 매핑 | 단일 PK | 복합 PK (deptId + empSeq) |
 | 하위부서 탐색 | 비체계적 순회 | BFS 레벨별 탐색 |
 | 참조 데이터 | 매번 7개 JOIN | 캐싱 Map + 애플리케이션 매핑 |
 
 ### 복합 PK가 지켜주는 것들
 
-| 시나리오 | 단일 PK | 복합 PK (deptId + crewSeq) |
+| 시나리오 | 단일 PK | 복합 PK (deptId + empSeq) |
 |---|---|---|
 | 같은 부서에 같은 사원 중복 등록 | **가능** (버그) | **불가능** (PK 위반) |
 | 부서별 사원 조회 | 별도 인덱스 필요 | PK 인덱스 자동 활용 |
@@ -1498,7 +1498,7 @@ Adjacency List, Nested Set, Materialized Path, Closure Table 네 가지 모델�
 - 이중 for문 → 단일 순회 `makeChildStruct` (성능)
 - 관계 추정 → 명시적 parentId FK (정확성)
 - depth 없음 → depth 컬럼 + 마이그레이션 (계층 표현)
-- 단일 PK → 복합 PK `DeptCrewId` (정합성)
+- 단일 PK → 복합 PK `DeptEmployeeId` (정합성)
 - 매번 JOIN → 참조 데이터 캐싱 `getCacheCodeMap` (효율)
 
 다섯 가지가 연쇄적으로 개선되었고, 이 모든 것의 출발점은 **parentId 컬럼 하나를 추가하는 것**이었습니다. 작은 모델 변경이 시스템 전체의 품질을 바꿀 수 있다는 것을 체감한 경험이었습니다.
