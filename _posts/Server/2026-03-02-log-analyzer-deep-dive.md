@@ -1,11 +1,11 @@
 ---
 layout: post
-title: "CSV Log Analyzer 설계기: Hexagonal Architecture부터 Virtual Threads 병렬 처리까지"
+title: "CSV Log Analyzer 설계기: DIP 기반 계층 분리부터 Virtual Threads 병렬 처리까지"
 comments: true
 excerpt: "CSV 접속 로그를 파싱하고 통계를 산출하며 IP 지리 정보를 병렬로 조회하는 RESTful 분석 서비스를 설계하면서 적용한 아키텍처 결정, 동시성 제어, 장애 격리 전략, 그리고 19개 이슈와 25개 PR을 통한 점진적 개선 과정을 실제 코드와 함께 상세히 기록합니다."
 date: 2026-03-02
 categories: [Server]
-tags: [Architecture, Java21, VirtualThreads, CircuitBreaker, Caffeine, SpringBoot, HexagonalArchitecture, Concurrency, DIP]
+tags: [Architecture, Java21, VirtualThreads, CircuitBreaker, Caffeine, SpringBoot, LayeredArchitecture, Concurrency, DIP]
 mermaid: true
 ---
 
@@ -216,11 +216,11 @@ AnalysisResult result = AnalysisResult.builder()
 
 ## 아키텍처: 계층형 + DIP
 
-### 왜 Hexagonal(Port & Adapter) 요소를 도입했는가
+### 왜 DIP(의존성 역전)를 부분 적용했는가
 
 일반적인 계층형 아키텍처에서는 `Service → Repository`처럼 상위 계층이 하위 계층의 **구현체**를 직접 의존합니다. 이 경우 저장소를 ConcurrentHashMap에서 Caffeine으로 교체하거나, 추후 PostgreSQL로 전환할 때 서비스 계층 코드가 변경되어야 합니다.
 
-이 프로젝트에서는 Application 계층에 **인터페이스(Port)**를 두고, Infrastructure 계층이 이를 구현하는 **DIP(Dependency Inversion Principle)**를 적용했습니다.
+이 프로젝트에서는 **교체 가능성이 높은 컴포넌트**인 파서와 저장소에 한해 Application 계층에 인터페이스를 두고, Infrastructure 계층이 이를 구현하는 **DIP(Dependency Inversion Principle)**를 적용했습니다. 전체를 Hexagonal Architecture로 만든 것은 아니고, `IpInfoClient`처럼 교체 가능성이 낮은 컴포넌트는 구현체를 직접 의존합니다.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
