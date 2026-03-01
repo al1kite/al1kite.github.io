@@ -301,6 +301,23 @@ public class AnalysisService {
 
 이 구조 덕분에 저장소를 `ConcurrentHashMap` → `Caffeine Cache` → 추후 `JPA`로 교체해도, `AnalysisService`는 한 줄도 수정할 필요가 없습니다. 실제로 프로젝트 히스토리(Issue #12 → PR #31)에서 `ConcurrentHashMap`을 `Caffeine Cache`로 전환했는데, 서비스 계층은 전혀 변경되지 않았습니다.
 
+### 왜 IpInfoClient는 인터페이스를 두지 않았는가
+
+`LogParser`와 `AnalysisResultRepository`는 인터페이스로 추출하면서, `IpInfoClient`는 왜 구현체를 직접 의존하게 두었는지 의문이 생길 수 있습니다. 이건 의도적인 선택입니다.
+
+**인터페이스로 추출한 2개: 구현이 실제로 바뀌었거나 바뀔 가능성이 높은 컴포넌트**
+
+- `LogParser`: CSV 이외에 Apache/Nginx 포맷, JSON 로그 등 **다양한 로그 포맷**을 지원해야 할 가능성이 높습니다. 인터페이스가 있으면 `ApacheLogParser`, `NginxLogParser`를 추가할 때 `AnalysisService`를 수정할 필요가 없습니다.
+- `AnalysisResultRepository`: 프로젝트 진행 중 **실제로 구현이 교체되었습니다.** `ConcurrentHashMap` → `Caffeine Cache`로 전환했고(Issue #12 → PR #31), 프로덕션에서는 `JPA`로 한 번 더 전환이 예상됩니다. 인터페이스가 없었다면 서비스 계층이 매번 수정되어야 했습니다.
+
+**인터페이스로 추출하지 않은 IpInfoClient: 구현이 바뀔 가능성이 낮은 컴포넌트**
+
+- IP 지리 정보 조회라는 책임은 ipinfo.io API 하나에 고정되어 있습니다. 다른 GeoIP 서비스(MaxMind, IP-API 등)로 교체할 현실적인 시나리오가 없었습니다.
+- `IpInfoClient` 내부에 이미 **Retry, Circuit Breaker, Cache, Timeout** 등 복잡한 안정성 로직이 밀접하게 결합되어 있습니다. 이를 인터페이스로 추상화하면 `IpGeoService.getIpInfo(ip)` 같은 단순한 시그니처가 되어, 내부의 Retry/Circuit Breaker 설정을 구현체마다 다시 구성해야 하는 번거로움이 생깁니다.
+- 테스트에서도 Mockito의 `@Mock`으로 `IpInfoClient` 구현체를 직접 모킹할 수 있으므로, 테스트 용이성을 위해 인터페이스가 반드시 필요하지 않습니다.
+
+정리하면, **"모든 의존성에 인터페이스를 만드는 것"이 아니라 "교체 가능성이 실제로 존재하는 의존성에만 인터페이스를 만드는 것"**이 YAGNI(You Aren't Gonna Need It) 원칙에 부합합니다. 불필요한 추상화는 코드를 읽기 어렵게 만들고, 인터페이스와 구현체가 1:1로 대응되는 "의미 없는 인터페이스"를 양산합니다.
+
 ### 분석 처리 흐름 (Sequence Diagram)
 
 ```mermaid
@@ -1331,13 +1348,22 @@ void 동시에_50개_스레드가_실패를_기록해도_카운트가_정확해�
 
 ---
 
-## 코드 컨벤션 심화
+## 코드 컨벤션: 왜 이 규칙이 이 프로젝트에 필요했는가
 
-### 5가지 핵심 원칙
+코드 컨벤션은 범용적인 "좋은 습관 모음"이 아니라, **이 프로젝트의 특성에서 비롯된 문제를 예방하기 위한 규칙**이어야 합니다. 이 프로젝트가 가진 특성과, 그 특성이 왜 각 컨벤션을 필요로 했는지를 정리합니다.
 
-프로젝트 전반에 걸쳐 적용된 코드 컨벤션을 정리합니다:
+### 이 프로젝트의 특성
 
-**1. 정적 팩터리 메서드**
+1. **대량 데이터 처리**: 한 번의 요청에서 최대 20만 줄의 CSV를 파싱하고, 수만 개의 `AccessLog` 객체를 생성합니다. 객체 생성과 메모리 관리가 곧 성능입니다.
+2. **동시 요청 처리**: 여러 사용자가 동시에 분석을 요청할 수 있고, IP Enrichment에서 Virtual Threads로 수십 개의 비동기 작업이 동시에 실행됩니다. 공유 상태가 있으면 반드시 경합이 발생합니다.
+3. **외부 API 의존**: ipinfo.io라는 통제 불가능한 외부 시스템에 의존합니다. 이 시스템의 장애가 내부로 전파되면 안 됩니다.
+4. **구현 교체 가능성**: 저장소가 인메모리에서 DB로, 파서가 CSV에서 다른 포맷으로 전환될 수 있습니다.
+
+이 특성들이 각 컨벤션 규칙과 어떻게 연결되는지 봅니다.
+
+### 5가지 핵심 원칙과 프로젝트 핏
+
+**1. 정적 팩터리 메서드 — "20만 개 객체의 생성 의도를 코드에서 읽을 수 있는가"**
 
 ```java
 IpInfo.unknown(ip);     // "이 IP는 정보가 없는 상태다"
@@ -1346,9 +1372,11 @@ ErrorResponse.of(status, errorCode, message, path);
 ParseStatistics.empty(); // "빈 통계"
 ```
 
-> "객체 생성에는 생성자 대신 정적 팩터리 메서드를 사용한다. 이는 생성 시점의 의도를 명확히 표현하고, 매개변수 검증과 기본값 처리 로직을 한 곳에 모으기 위함이다."
+이 프로젝트에서는 한 번의 요청에 `AccessLog` 객체가 20만 개까지 생성됩니다. 이 객체들이 어떤 의미로 만들어졌는지가 코드에서 드러나지 않으면, 디버깅할 때 "이 IpInfo가 실제 조회 결과인지, 장애 시 fallback인지" 구분하기 어렵습니다. `IpInfo.unknown(ip)`은 "이건 장애 fallback이다"라는 의도를 이름만으로 전달합니다.
 
-**2. Fail-Fast**
+또한 정적 팩터리 내부에서 검증과 정규화를 수행하므로, 20만 개의 객체가 모두 **동일한 검증 로직을 통과한다는 일관성**이 보장됩니다.
+
+**2. Fail-Fast — "20만 줄 파싱 중 잘못된 데이터가 끝까지 흘러가면 원인 추적이 불가능하다"**
 
 ```java
 Objects.requireNonNull(file, "file은 null일 수 없습니다");
@@ -1356,9 +1384,11 @@ Objects.requireNonNull(analysisId, "analysisId는 null일 수 없습니다");
 Objects.requireNonNull(ip, "ip는 null일 수 없습니다");
 ```
 
-> "메서드는 잘못된 입력을 조용히 허용하지 않는다. null이 허용되지 않는 경우, 메서드 진입 시점에서 즉시 검증한다."
+CSV 파싱 → 통계 계산 → IP 조회 → 결과 저장까지 4단계의 파이프라인을 거칩니다. 만약 파싱 단계에서 null인 analysisId가 조용히 통과하면, 저장 단계에서 NullPointerException이 발생하고, 스택 트레이스에는 저장소 코드만 나옵니다. 진짜 원인이 파싱 단계에 있다는 것을 찾으려면 파이프라인 전체를 역추적해야 합니다.
 
-**3. null 반환 금지**
+Fail-Fast로 진입 시점에 즉시 실패하면, 에러 메시지 자체가 "file은 null일 수 없습니다"처럼 **원인을 직접 가리킵니다.**
+
+**3. null 반환 금지 — "다중 스레드 환경에서 null 체크 누락은 간헐적 NPE로 나타난다"**
 
 ```java
 // null 대신 Optional
@@ -1372,7 +1402,9 @@ public List<AnalysisResult> findAll() {
 }
 ```
 
-**4. 자원 관리**
+Virtual Threads로 10개의 IP를 동시에 조회하는 상황에서, 한 스레드의 반환값이 null이면 그것을 수집하는 코드에서 NPE가 발생합니다. 문제는 이게 **간헐적**이라는 것입니다. 10개 중 9개가 성공하면 대부분의 테스트에서는 통과하고, 프로덕션에서 API 장애가 발생하는 특정 시점에만 터집니다. Optional과 빈 컬렉션은 이런 간헐적 NPE를 구조적으로 차단합니다.
+
+**4. 자원 관리 — "50MB 파일 스트림이 누수되면 OOM"**
 
 ```java
 try (var reader = new BufferedReader(
@@ -1384,7 +1416,9 @@ try (var reader = new BufferedReader(
 }
 ```
 
-**5. 인터럽트 존중**
+50MB의 CSV 파일을 스트리밍으로 파싱하는 도중 예외가 발생하면, InputStream이 닫히지 않아 메모리가 계속 점유됩니다. 동시에 여러 사용자가 분석을 요청하면 이런 누수가 누적되어 OOM(OutOfMemoryError)이 발생합니다. try-with-resources는 예외 발생 여부와 관계없이 자원을 반드시 해제합니다.
+
+**5. 인터럽트 존중 — "Virtual Thread에서 인터럽트를 무시하면 Carrier Thread가 고갈된다"**
 
 ```java
 private boolean sleep(long ms) {
@@ -1398,7 +1432,19 @@ private boolean sleep(long ms) {
 }
 ```
 
-재시도 대기 중 인터럽트가 발생하면 즉시 중단하고 플래그를 복구합니다. Virtual Thread 환경에서 특히 중요합니다.
+Virtual Thread 환경에서 `Thread.sleep()` 중 인터럽트가 발생하면 즉시 중단하고 플래그를 복구해야 합니다. 만약 InterruptedException을 catch하고 무시하면, Virtual Thread가 종료되지 않고 Retry 루프를 계속 돌면서 Carrier Thread를 점유합니다. `completeOnTimeout`으로 5초 타임아웃을 걸어도, 인터럽트를 무시하는 Virtual Thread는 5초가 지나도 계속 Carrier Thread 위에서 실행됩니다.
+
+### 컨벤션이 실제로 버그를 막은 사례
+
+프로젝트 히스토리에서 컨벤션이 없었으면 발생했을 버그들:
+
+| 컨벤션 | 없었다면 발생했을 문제 | 실제 적용 시점 |
+|--------|----------------------|--------------|
+| 방어적 복사 | Statistics의 topPaths를 외부에서 수정하면 다른 스레드가 읽는 중 ConcurrentModificationException | Issue #2 → PR #26 |
+| Fail-Fast (`@NonNull`) | Builder에서 analysisId를 누락하면 저장 시점에 NPE, 원인 추적에 시간 소모 | Issue #1 → PR #25 |
+| Compact Constructor | IpInfo의 country가 null이면 Statistics의 국가별 집계에서 NPE | Issue #3 → PR #27 |
+| try-with-resources | CSV 파싱 중 예외 발생 시 InputStream 누수 → 동시 요청 시 OOM | 초기 구현부터 적용 |
+| 인터럽트 존중 | Retry 대기 중 인터럽트 무시 → Virtual Thread가 종료되지 않아 Carrier Thread 고갈 | Issue #11 → PR #30 |
 
 ---
 
