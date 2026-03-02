@@ -2,7 +2,7 @@
 layout: post
 title: "CSV Log Analyzer 설계기: DIP 기반 계층 분리부터 Virtual Threads 병렬 처리까지"
 comments: true
-excerpt: "CSV 접속 로그를 파싱하고 통계를 산출하며 IP 지리 정보를 병렬로 조회하는 RESTful 분석 서비스를 설계하면서 적용한 아키텍처 결정, 동시성 제어, 장애 격리 전략, 그리고 19개 이슈와 25개 PR을 통한 점진적 개선 과정을 실제 코드와 함께 상세히 기록합니다."
+excerpt: "ShortURL 프로젝트에서 IP 통계를 다루며 느낀 한계를 계기로, CSV 접속 로그 분석 서비스를 사이드 프로젝트로 만들어 보았습니다. DIP 기반 계층 분리, Virtual Threads 병렬 처리, CAS 기반 Circuit Breaker, 그리고 19개 이슈와 25개 PR을 통한 점진적 개선 과정을 실제 코드와 함께 기록합니다."
 date: 2026-03-02
 categories: [Server]
 tags: [Architecture, Java21, VirtualThreads, CircuitBreaker, Caffeine, SpringBoot, LayeredArchitecture, Concurrency, DIP]
@@ -11,7 +11,9 @@ mermaid: true
 
 ## 들어가며
 
-사내 웹 서비스의 접속 로그(CSV)를 업로드하면 **통계 분석 + IP 지리 정보 조회**를 수행하고, 결과를 REST API로 제공하는 서비스를 설계해야 했습니다.
+ShortURL 서비스에서 IP 기반 국가별 통계를 다루면서, "접속 로그를 체계적으로 분석하는 서비스를 만들어보면 어떨까?"라는 생각이 들었습니다. IP → 국가 매핑, 대량 로그 파싱, 외부 API 연동 등 ShortURL에서 경험한 문제들을 더 깊이 파고들고 싶었습니다.
+
+그래서 CSV 형식의 접속 로그를 업로드하면 **통계 분석 + IP 지리 정보 조회**를 수행하고, 결과를 REST API로 제공하는 사이드 프로젝트를 만들어 보았습니다.
 
 단순히 "CSV 읽고 통계 뿌려주기"로 끝날 수도 있지만, 실제로 구현하면서 마주친 문제들은 예상보다 훨씬 깊었습니다.
 
