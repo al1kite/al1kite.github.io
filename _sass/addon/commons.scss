@@ -1537,3 +1537,57 @@ search {
     }
   }
 } /* min-width: 1650px */
+
+@media print {
+  /* 불필요한 UI 숨기기 */
+  #sidebar,
+  #topbar-wrapper,
+  #panel-wrapper,
+  #back-to-top,
+  #mask,
+  #search-result-wrapper,
+  footer,
+  #tail-wrapper .post-navigation,
+  #related-posts,
+  #disqus_thread,
+  .utterances,
+  .post-tail-bottom .share-wrapper,
+  .post-tail-bottom .license-wrapper {
+    display: none !important;
+  }
+
+  /* 본문 레이아웃 전체 너비 사용 */
+  #main-wrapper {
+    margin-left: 0 !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  /* 링크 URL 표시 */
+  .content a[href]:not(.img-link)::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #555;
+    word-break: break-all;
+  }
+
+  /* 코드 블록 줄바꿈 */
+  pre {
+    white-space: pre-wrap;
+    border: 1px solid #ddd;
+  }
+
+  /* 이미지 페이지 넘김 방지 */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* 제목에서 페이지 나뉨 방지 */
+  h1, h2, h3, h4, h5 {
+    page-break-after: avoid;
+  }
+}
